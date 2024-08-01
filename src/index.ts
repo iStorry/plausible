@@ -10,6 +10,8 @@ import type {
   PlausibleAggregateOptions,
   PlausibleAPIOptions,
   PlausibleError,
+  PlausibleTimeseries,
+  PlausibleTimeseriesOptions,
 } from "./@types";
 
 class PlausibleAPI {
@@ -45,9 +47,13 @@ class PlausibleAPI {
     });
 
     this.axios.interceptors.response.use(
-      (response: AxiosResponse) => Promise.resolve(response.data),
+      (response: AxiosResponse) => Promise.resolve(response),
       (error: AxiosError<PlausibleError>) => {
-        return Promise.reject(error.response?.data.error ?? "Unknown error");
+        const status = error.response?.status;
+        if (status !== undefined && status >= 300 && status < 500) {
+          return Promise.reject(`Request failed with status ${status}`);
+        }
+        return Promise.reject(error);
       }
     );
   }
@@ -57,18 +63,29 @@ class PlausibleAPI {
    * @returns The number of realtime visitors.
    * @throws {PlausibleError} If the API call fails.
    */
-  async realtimeVisitors(): Promise<number> {
-    return await this.axios.get<PlausibleError, number>("/realtime/visitors");
+  async realtime(): Promise<number> {
+    try {
+      const response = await this.axios.get<number>("/realtime/visitors");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 
+  /**
+   * Get aggregated data for specified metrics.
+   * @param options - The options for aggregation.
+   * @returns The aggregated data.
+   * @throws {Error} If the API call fails.
+   */
   async aggregate<T extends readonly MetricEnum[]>(
     options: PlausibleAggregateOptions<T>
-  ) {
+  ): Promise<{ [K in T[number]]: PlausibleAggregate[K] }> {
     try {
-      const { metrics = ["visitors"], ...restOptions } = options;
-      const filters = options.filters?.map((filter) => {
-        return `${filter.property}${filter.operator}${filter.value}`;
-      });
+      const { metrics, ...restOptions } = options;
+      const filters = options.filters?.map(
+        (filter) => `${filter.property}${filter.operator}${filter.value}`
+      );
 
       const params = {
         ...restOptions,
@@ -76,20 +93,49 @@ class PlausibleAPI {
         filters: filters?.join("&"),
       };
 
-      type AggregatedResponse<T extends readonly MetricEnum[]> = {
-        results: {
-          [K in T[number]]: PlausibleAggregate[K];
-        };
-      };
+      const response = await this.axios.get<
+        { results: PlausibleAggregate },
+        AxiosResponse<{ results: PlausibleAggregate }>
+      >("/aggregate", { params });
+      return response.data.results;
+    } catch (error) {
+      throw error;
+    }
+  }
 
-      const result = await this.axios.get<AxiosError, AggregatedResponse<T>>(
-        "/aggregate",
-        { params }
+  /**
+   * Get timeseries data over a certain time period.
+   * If you are familiar with the Plausible dashboard,
+   * this endpoint corresponds to the main visitor graph.
+   * @param options - The options for timeseries data.
+   * @returns The timeseries data.
+   * @throws {Error} If the API call fails.
+   */
+  async timeseries<T extends readonly (keyof PlausibleTimeseries)[]>(
+    options: PlausibleTimeseriesOptions<T>
+  ): Promise<
+    Array<{ date: string } & { [K in T[number]]: PlausibleTimeseries[K] }>
+  > {
+    try {
+      const { metrics, ...restOptions } = options;
+      const filters = options.filters?.map(
+        (filter) => `${filter.property}${filter.operator}${filter.value}`
       );
 
-      return result.results;
+      const params = {
+        ...restOptions,
+        metrics: metrics.join(","),
+        filters: filters?.join("&"),
+      };
+
+      const response = await this.axios.get<
+        { results: PlausibleTimeseries[] }, // Expect array of PlausibleTimeseries
+        AxiosResponse<{ results: PlausibleTimeseries[] }>
+      >("/timeseries", { params });
+
+      return response.data.results;
     } catch (error) {
-      throw new Error(`Failed to fetch aggregate data: ${error}`);
+      throw error;
     }
   }
 }

@@ -18,7 +18,7 @@ export type MetricEnum =
   | "conversion_rate"
   | "time_on_page";
 
-type PropertiesEnum =
+export type PropertiesEnum =
   | "event:goal"
   | "event:page"
   | "event:hostname"
@@ -40,18 +40,25 @@ type PropertiesEnum =
   | "visit:region"
   | "visit:city";
 
+export type IntervalEnum = "date" | "month";
+
 export type PlausibleAPIOptions = {
   /**
    * The base URL of the Plausible API.
    * Defaults to "https://plausible.io/api/v1/stats".
+   * @example "https://plausible.io/api/v1/stats"
    */
   baseUrl?: string;
+
   /**
    * The site ID of the Plausible site.
+   * @example "your-site-id"
    */
   siteId: string;
+
   /**
    * The access token of the Plausible site.
+   * @example "your-access-token"
    */
   accessToken: string;
 };
@@ -59,15 +66,20 @@ export type PlausibleAPIOptions = {
 export type PlausibleFilter = {
   /**
    * The property to filter by.
+   * @example "event:goal"
    */
   property: PropertiesEnum;
+
   /**
    * The operator to filter by.
+   * @example "=="
    */
   operator: "==" | "!=" | "|" | ";" | "*";
+
   /**
    * The value to filter by.
    * See https://plausible.io/docs/stats-api#filtering for more information.
+   * @example "Signup"
    */
   value: string;
 };
@@ -76,34 +88,81 @@ export type PlausibleAggregateOptions<T> = {
   /**
    * The date range to aggregate over. Defaults to "30d".
    * See https://plausible.io/docs/stats-api#get-apiv1statsaggregate for more information.
+   * @example "30d"
    */
   period?: PeriodEnum;
-  /**
-   * Period is reative to this date. Defaults to the current date.
-   * When using a custom range, the date parameter expects two dates in the format YYYY-MM-DD.
-   * See https://plausible.io/docs/stats-api#time-periods for more information.
-   */
-  date?: string;
-  /**
-   * Comma-separated list of metrics to aggregate, e.g. visitors,pageviews,bounce_rate
-   * If not specified, will default to visitors.
-   * See https://plausible.io/docs/stats-api#metrics for more details.
-   */
-  metrics?: T;
-  /**
-   * A boolean determining whether to include imported stats in the returned results or not. If not specified, it will default to false. See imported stats for more details.
-   * https://plausible.io/docs/stats-api#imported-stats
-   */
-  with_imported?: boolean;
 
   /**
-   * A string determining whether to compare the current period with the previous period or not. If not specified, it will default to false.
+   * The date relative to which the period is calculated. Defaults to the current date.
+   * When using a custom range, the date parameter expects two dates in the format YYYY-MM-DD.
+   * See https://plausible.io/docs/stats-api#time-periods for more information.
+   * @example "2023-01-01"
+   */
+  date?: string;
+
+  /**
+   * Comma-separated list of metrics to aggregate.
+   * See https://plausible.io/docs/stats-api#metrics for more details.
+   * @example ["visitors", "pageviews"]
+   */
+  metrics: T;
+
+  /**
+   * Whether to include imported stats in the returned results. Defaults to false.
+   * See https://plausible.io/docs/stats-api#imported-stats for more details.
+   * @example true
+   */
+  withImported?: boolean;
+
+  /**
+   * Whether to compare the current period with the previous period. Defaults to false.
    * The previous period will be of the exact same length as specified in the period parameter.
-   * https://plausible.io/docs/stats-api#compare-periods
+   * See https://plausible.io/docs/stats-api#compare-periods for more details.
+   * @example "previous_period"
    */
   compare?: "previous_period";
+
   /**
-   *
+   * A list of filters to apply to the aggregated data.
+   * See https://plausible.io/docs/stats-api#filtering for more information.
+   * @example [{ property: "event:goal", operator: "==", value: "Signup" }]
    */
   filters?: PlausibleFilter[];
+};
+
+export type PlausibleTimeseriesOptions<T> = {
+  /**
+   * The date range to aggregate over. Defaults to "30d".
+   * See https://plausible.io/docs/stats-api#get-apiv1statsaggregate for more information.
+   * @example "30d"
+   */
+  period?: PeriodEnum;
+
+  /**
+   * A list of filters to apply to the aggregated data.
+   * See https://plausible.io/docs/stats-api#filtering for more information.
+   * @example [{ property: "event:goal", operator: "==", value: "Signup" }]
+   */
+  filters?: PlausibleFilter[];
+
+  /**
+   * Comma-separated list of metrics to aggregate.
+   * See https://plausible.io/docs/stats-api#metrics for more details.
+   * @example ["visitors", "pageviews"]
+   */
+  metrics: T;
+
+  /**
+   * Whether to include imported stats in the returned results. Defaults to false.
+   * See https://plausible.io/docs/stats-api#imported-stats for more details.
+   * @example true
+   */
+  withImported?: boolean;
+
+  /**
+   * The interval at which the timeseries data is aggregated. Defaults to "30d".
+   * See https://plausible.io/docs/stats-api#get-apiv1statstimeseries for more information.
+   * @example "30d"
+   */
+  interval?: IntervalEnum;
 };
