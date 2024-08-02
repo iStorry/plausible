@@ -130,7 +130,3 @@ This project is licensed under the MIT License. See the [LICENSE](./LICENSE) fil
 ---
 
 Feel free to adjust the "Contributing" and "License" sections according to your project's specifics. This revised README includes installation instructions, usage examples, method details, and additional sections for contributing and licensing.
-
-```
-
-```
