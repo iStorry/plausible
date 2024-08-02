@@ -1,6 +1,6 @@
 {
   "name": "@istorry/plausible",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Typesafe wrapper for the Plausible analytics API",
   "type": "module",
   "main": "dist/index.js",
