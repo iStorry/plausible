@@ -1,16 +1,19 @@
 {
   "name": "@istorry/plausible",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Typesafe wrapper for the Plausible analytics API",
   "type": "module",
-  "main": "dist/index.js",
-  "module": "dist/index.cjs",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
   "exports": {
-    ".": "./dist/index.js"
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
   },
   "scripts": {
     "build": "rimraf dist && NODE_OPTIONS='--max-old-space-size=16384' tsup && tsc --declaration",
